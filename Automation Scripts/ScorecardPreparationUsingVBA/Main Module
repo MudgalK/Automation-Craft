@@ -1,0 +1,31 @@
+	Public Sub ExecuteAllModules()
+	    
+	   Dim errorOccurred As Boolean
+	
+	    errorOccurred = False ' Initialize the error tracker
+	    
+	
+	    On Error GoTo ErrorHandler ' Set up error handling
+	    
+	    Sheet1.ExecuteTaskForFirm
+	    
+	    Sheet2.ExecuteTaskForTaxpayer
+	    
+	    Sheet3.ExecuteTaskForXLFScorecard
+	
+	    ' If no errors occurred, notify the user
+	   If Not errorOccurred Then
+	        MsgBox "All procedures executed successfully, Please verify your scorecard!", vbInformation, "Execution Status"
+	   End If
+	
+	    Exit Sub ' Skip the error handler when all is well
+	
+	
+	ErrorHandler:
+	    MsgBox "Error occurred in: " & Err.Source & vbCrLf & "Error Description: " & Err.Description, vbCritical, "Error Status"
+	    Err.Clear
+	    Exit Sub
+	'    Resume Next ' Continue with the next procedure
+	End Sub
+	
+Passowrd: Kapil@WK1607
