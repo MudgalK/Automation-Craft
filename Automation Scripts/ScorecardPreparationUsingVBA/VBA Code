@@ -1,0 +1,192 @@
+	Public Sub ExecuteTaskForFirm()
+	    
+	    ' #### Declaring the Variables ###
+	
+	    Dim rw, rowPosition, responseTimeColNumber, headerColNumber As Integer
+	    Dim cell As String
+	    Dim newcell, newcellForResponseTime, formulaRangeForResponseTime, currentcell, formulaRange As Range
+	    Dim todaysDate, sectionRange, sectionRangeForResponseTime As String
+	    Set ws = ThisWorkbook.Worksheets("3X Scorecard-Firm")
+	    
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    '           ### Section To Apply Vlook up for Response Time and Transaction Count for Executed Test - Starts###
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    
+	                 ' Clearing % Difference Cells before new run so that it wouldn't impact the existing formating
+	                    ' Code Snip for deleting the % Diff column so that it won't impact other column formating
+	    
+	    headerNameForBaselineVsRegression = Range("C6").End(xlToRight).End(xlToRight).Offset(0, -2).Offset(-1, 0)
+	    headerNameForExpectedVsRegression = Range("C6").End(xlToRight).End(xlToRight).Offset(0, -1).Offset(-1, 0)
+	    If headerNameForBaselineVsRegression <> "(%) Diff Baseline vs Regression" Then
+	        colNameForBaselineVsRegression = Split(Range("C6").End(xlToRight).End(xlToRight).Address, "$")(1)
+	        clearSection = colNameForBaselineVsRegression & "6:" & colNameForBaselineVsRegression & "62"
+	        ws.Range(clearSection).ClearContents
+	        colNameForExpectedVsRegression = Split(Range("C6").End(xlToRight).End(xlToRight).Address, "$")(1)
+	        clearSectionForSecondTime = colNameForExpectedVsRegression & "6:" & colNameForExpectedVsRegression & "62"
+	        ws.Range(clearSectionForSecondTime).ClearContents
+	    End If
+	' ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	    ' Selecting the Cell that has Non-empty value
+	    rw = Range("C6").End(xlToRight).Column
+	    ' Insert the column for
+	    ws.Columns(rw + 1).Insert Shift:=xlToRight
+	        
+	    Set newcell = ws.Cells(5, rw + 1)
+	    'cell = newCell.Address
+	    
+	    ' Name the cell
+	    newcell.Value = Format(Date, "dd-mmm")
+	    
+	    ' Defining the Formula
+	    Dim formula As String
+	    Dim colName As String
+	    
+	    ' Applying formula to fetch TPH from the raw results sheets
+	    formula = "=VLOOKUP(C6,'3x Load Test Raw Results'!A$25:J$7619,8,FALSE)"
+	    colName = Split(newcell.Address, "$")(1)
+	    sectionRange = colName & "6:" & colName & "62"
+	    Set formulaRange = ws.Range(sectionRange)
+	    formulaRange.formula = formula
+	    
+	' ------------------------------------------------------------------------------------------------------------------------------------------------------------------
+	    ' Section For Calculating the Response Time for New Test
+	    
+	    rowPosition = Range("C6").End(xlToRight).Column
+	    colNumber = Split(Range("C6").End(xlToRight).Address, "$")(2)
+	    Set currentcell = Range("C6").End(xlToRight)
+	    ' Shifting to another non-empty row to switch to response time side
+	    If IsEmpty(currentcell.Offset(colNumber, 1)) Then
+	        ' second cntrl + right arrow to move to first Non-empty column
+	         Set currentcell = currentcell.End(xlToRight)
+	         ' Third cntrl + right arrow to move to Last Non-empty column
+	         responseTimeColNumber = currentcell.End(xlToRight).Column
+	    End If
+	    ' Insert the column
+	    ws.Columns(responseTimeColNumber + 1).Insert Shift:=xlToRight
+	    
+	    Set newcellForResponseTime = ws.Cells(5, responseTimeColNumber + 1)
+	    
+	    ' Name the cell
+	    newcellForResponseTime.Value = Format(Date, "dd-mmm")
+	    
+	    ' Defining the Formula
+	    Dim formulaForResponseTime As String
+	    Dim colNameForResponseTime As String
+	    
+	    ' Applying formula to fetch RT from the raw results sheets
+	    formulaForResponseTime = "=VLOOKUP(C6,'3x Load Test Raw Results'!A$25:J$7619,4,FALSE)"
+	    colNameForResponseTime = Split(newcellForResponseTime.Address, "$")(1)
+	    sectionRangeForResponseTime = colNameForResponseTime & "6:" & colNameForResponseTime & "62"
+	    Set formulaRangeForResponseTime = ws.Range(sectionRangeForResponseTime)
+	    formulaRangeForResponseTime.formula = formulaForResponseTime
+	    
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    '           ### Section To Apply Vlook up for Response Time and Transaction Count for Executed Test - Ends###
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    
+	    
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    '           ###  Section To Calculate % Difference Between Current Test, Previous Test and Threshold - Starts###
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    
+	     ' ----------------------------------------------------------------------------------------------------------------
+	    ' Section To Calculate % Difference Between Tests
+	        ' Identifing the column of current test
+	        currentTestCol = Range("E5").End(xlToRight).Address
+	        
+	        ' Identifing the column of Previous test
+	        previousTestCol = Range("E5").End(xlToRight).Offset(0, -1).Address
+	        ' Setting the column of Threshold Values
+	        expectedCountCol = "E"
+	        
+	        ' Defining the formulas
+	            ' Declaring the variables as string that will store the formula in string format Note: Not Neccessary to declare in case if you're not planning to use the same value in future
+	            Dim formulaForPctDiffBTWCurrentAndPrevious, colNameForPctDiffBTWCurrentAndPrevious As String
+	            
+	            ' To Get only the Column Name For Current Test and Previous test e.g., for the input G6, Output will be G only
+	        colNameForCurrentTest = Split(currentTestCol, "$")(1)
+	        colNameForPreviousTest = Split(previousTestCol, "$")(1)
+	            
+	            ' Wrinting down the formula in string format
+	                ' Formula for % Diff B/W Current test and Previous Test
+	        formulaForPctDiffBTWCurrentAndPrevious = "=(" & colNameForCurrentTest & "6 - " & colNameForPreviousTest & "6)/" & colNameForPreviousTest & "6"
+	            
+	                ' Formula for % Diff B/W Current test and Expected Results
+	        formulaForPctDiffBTWCurrentAndExpectedCount = "=(" & colNameForCurrentTest & "6 - " & expectedCountCol & "6)/" & expectedCountCol & "6"
+	            ' setting the Range where Formula needs to be apply
+	                ' B/W Current test and Previous Test
+	        colNameForPctDiffBTWCurrentAndPrevious = Split(Range("C6").End(xlToRight).End(xlToRight).Offset(0, -2).Address, "$")(1)
+	        sectionRangeForPctDiffBTWCurrentAndPrevious = colNameForPctDiffBTWCurrentAndPrevious & "6:" & colNameForPctDiffBTWCurrentAndPrevious & "62"
+	            
+	                ' B/W Current test and Expected Results
+	        colNameForPctDiffBTWCurrentAndExpectedCount = Split(Range("C6").End(xlToRight).End(xlToRight).Offset(0, -1).Address, "$")(1)
+	        sectionRangeForPctDiffBTWCurrentAndExpectedCount = colNameForPctDiffBTWCurrentAndExpectedCount & "6:" & colNameForPctDiffBTWCurrentAndExpectedCount & "62"
+	            
+	            ' Applying the Formula B/W Current test and Previous Test
+	        Set formulaRangeForPctDiffBTWCurrentAndPrevious = ws.Range(sectionRangeForPctDiffBTWCurrentAndPrevious)
+	        formulaRangeForPctDiffBTWCurrentAndPrevious.formula = formulaForPctDiffBTWCurrentAndPrevious
+	        
+	            ' Applying the Formula B/W Current test and Expected Results
+	        Set formulaRangeForPctDiffBTWCurrentAndExpectedCount = ws.Range(sectionRangeForPctDiffBTWCurrentAndExpectedCount)
+	        formulaRangeForPctDiffBTWCurrentAndExpectedCount.formula = formulaForPctDiffBTWCurrentAndExpectedCount
+	        
+	            ' Changing the format of the cells to Percentage upto 2 decimals
+	        formulaRangeForPctDiffBTWCurrentAndPrevious.NumberFormat = "0.00%"
+	        formulaRangeForPctDiffBTWCurrentAndExpectedCount.NumberFormat = "0.00%"
+	            ' Section To Calculate % Difference Between Tests
+	        
+	        ' Identifing the column of current test
+	        currentTestColForResponseTime = Range("E5").End(xlToRight).End(xlToRight).End(xlToRight).Address
+	        
+	        ' Identifing the column of Previous test
+	        previousTestColForResponseTime = Range("E5").End(xlToRight).End(xlToRight).End(xlToRight).Offset(0, -1).Address
+	        ' Setting the column of Threshold Values
+	        thresholdCountColForResponseTime = Range("E5").End(xlToRight).End(xlToRight).Offset(0, 2).Address
+	        
+	        ' Defining the formulas
+	            ' Declaring the variables as string that will store the formula in string format Note: Not Neccessary to declare in case if you're not planning to use the same value in future
+	            Dim formulaForPctDiffBTWCurrentAndPreviousForResponseTime, colNameForPctDiffBTWCurrentAndPreviousForResponseTime As String
+	            ' To Get only the Column Name For Current Test and Previous test e.g., for the input G6, Output will be G only
+	        colNameForCurrentTestForResponseTime = Split(currentTestColForResponseTime, "$")(1)
+	        colNameForPreviousTestForResponseTime = Split(previousTestColForResponseTime, "$")(1)
+	        colNameForThresholdForResponseTime = Split(thresholdCountColForResponseTime, "$")(1)
+	            ' Wrinting down the formula in string format
+	            ' Formula for % Diff B/W Current test and Previous Test
+	        formulaForPctDiffBTWCurrentAndPreviousForResponseTime = "=(" & colNameForPreviousTestForResponseTime & "6 - " & colNameForCurrentTestForResponseTime & "6)/" & colNameForPreviousTestForResponseTime & "6"
+	            ' Formula for % Diff B/W Current test and Expected Results
+	        formulaForPctDiffBTWCurrentAndExpectedCountForResponseTime = "=(" & colNameForThresholdForResponseTime & "6 - " & colNameForCurrentTestForResponseTime & "6)/" & colNameForThresholdForResponseTime & "6"
+	            ' setting the Range where i want to apply those formulas
+	            ' B/W Current test and Previous Test
+	        colNameForPctDiffBTWCurrentAndPreviousForResponseTime = Split(Range("C6").End(xlToRight).End(xlToRight).End(xlToRight).Offset(0, 2).Address, "$")(1)
+	        sectionRangeForPctDiffBTWCurrentAndPreviousForResponseTime = colNameForPctDiffBTWCurrentAndPreviousForResponseTime & "6:" & colNameForPctDiffBTWCurrentAndPreviousForResponseTime & "62"
+	            ' B/W Current test and Expected Results
+	        colNameForPctDiffBTWCurrentAndExpectedCountForResponseTime = Split(Range("C6").End(xlToRight).End(xlToRight).End(xlToRight).Offset(0, 3).Address, "$")(1)
+	        sectionRangeForPctDiffBTWCurrentAndExpectedCountForResponseTime = colNameForPctDiffBTWCurrentAndExpectedCountForResponseTime & "6:" & colNameForPctDiffBTWCurrentAndExpectedCountForResponseTime & "62"
+	            ' Applying the Formula B/W Current test and Previous Test
+	        Set formulaRangeForPctDiffBTWCurrentAndPreviousForResponseTime = ws.Range(sectionRangeForPctDiffBTWCurrentAndPreviousForResponseTime)
+	        formulaRangeForPctDiffBTWCurrentAndPreviousForResponseTime.formula = formulaForPctDiffBTWCurrentAndPreviousForResponseTime
+	            ' Applying the Formula B/W Current test and Expected Results
+	        Set formulaRangeForPctDiffBTWCurrentAndExpectedCountForResponseTime = ws.Range(sectionRangeForPctDiffBTWCurrentAndExpectedCountForResponseTime)
+	        formulaRangeForPctDiffBTWCurrentAndExpectedCountForResponseTime.formula = formulaForPctDiffBTWCurrentAndExpectedCountForResponseTime
+	            ' Changing the format of the cells to Percentage upto 2 decimals
+	        formulaRangeForPctDiffBTWCurrentAndPreviousForResponseTime.NumberFormat = "0.00%"
+	        formulaRangeForPctDiffBTWCurrentAndExpectedCountForResponseTime.NumberFormat = "0.00%"
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    '           ###  Section To Calculate % Difference Between Current Test, Previous Test and Threshold - Ends ###
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    '           ###  Section To Copy the entire sheet - Starts ###
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    
+	    ' # Copy and Paste entire sheet as values so that changes won't be there upon changing the file
+	    Sheets("3X Scorecard-Firm").Cells.Copy
+	    Sheets("3X Scorecard-Firm").Cells.PasteSpecial Paste:=xlPasteValues
+	    Application.CutCopyMode = False
+	    Set ws = Nothing
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    '           ###  Section To Copy the entire sheet - Ends ###
+	    ' ----------------------------------------------------------------------------------------------------------------
+	    
+	
+	End Sub
